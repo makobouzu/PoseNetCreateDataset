@@ -1,16 +1,19 @@
+let net;  //posenet.model
 let img_dom; //読み込んだimgのDom
 let img; //読み込んだimgのp5.Image
-let images;  //assets内の全ての画像の名前
-let img_dir = "/assets" //choose default: /assets or /img
-let net;  //posenet.model
-let poses = {}; //pose格納用
-let points = []; //変更可能なxy特徴点
+let assets;  // /assets内の全ての画像の名前
+let images;  // /img内の全ての画像の名前
+let assets_dir     = "/assets" //choose default: /assets
+let img_dir        = "/img" //choose default: /img
+let assets_name    = "";
+let image_name     = ""; //image_name格納用
+let poses          = {}; //pose格納用
+let points         = []; //変更可能なxy特徴点
 let initial_points = []; //推論結果のxy特徴点
-let points_name = []; //特徴点の名前
-let output_json  = {}; //複数人用のjson
-let json_array = []; //複数人用のjson_array
-let drag_flg = false;
-let image_name = ""; //image_name格納用
+let points_name    = []; //特徴点の名前
+let output_json    = {}; //複数人用のjson
+let json_array     = []; //複数人用のjson_array
+let num            = -1; //移動させるkeypoints
 
 function setup(){
   frameRate(0); // block call draw() before init()
@@ -21,7 +24,6 @@ function draw(){
   resizeImage(img, img_dom.height);
   image(img, 0, 0);
   drawKeypoints(points);
-  dragKeypoints(points);
 }
 
 /* draw function ---------------------------------- */
@@ -50,23 +52,27 @@ async function init() {
     }
   }
   
-  images = await doGet(img_dir+"/all");
-  image_name = images[0];
-  img = loadImage(img_dir+"/"+image_name);
-  for(let i = 0; i < images.length ; i++){
+  assets = await doGet(assets_dir+"/all");
+  images = await doGet(img_dir+"/all");   //assets.push(await doGet())?
+  if(images.length != 0){
+    assets.push(images.slice());
+  }
+  
+  assets_name = assets[0];
+  img = loadImage(assets_dir+"/"+assets_name);
+  for(let i = 0; i < assets.length ; i++){
       let option = document.createElement("option");
-      option.setAttribute("value", images[i]);
-      option.text = images[i];
+      option.setAttribute("value", assets[i]);
+      option.text = assets[i];
       document.getElementById("img_select").appendChild(option);
   }
 
   net = await loadPosenet();
 
-  const img_size = await loadImgsrc(img_dir+"/"+image_name);
+  const img_size = await loadImgsrc(assets_dir+"/"+assets_name);
   createCanvas(img_size.x, img_size.y);
-  
-  if(all_data.length > 0){
-    let fullPath = await doGet(img_dir+"/u/"+image_name);
+  if(all_data.imgInfo.length > 0){
+    let fullPath = await doGet(assets_dir+"/u/"+assets_name);
     let searched = await searchData(all_data.imgInfo, fullPath[0]);
     json_array = await deleteData(json_array, fullPath[0]);
     if(searched.length == 1){
@@ -77,7 +83,8 @@ async function init() {
   }else{
     poses = await getPose(img_dom);
   }
-  initial_points = await setinitial_points(img_dom);
+  const init = await setinitial_points(img_dom);
+  initial_points = init.slice();
   
   console.log("show now (saved data or posenst)", poses);
   console.log("[READY]");
@@ -85,6 +92,22 @@ async function init() {
   
   setKeypoints(poses);
 }
+
+/* add---------------------------------*/
+// function findImg(_assets, _images){
+//   console.log("assets", _assets)
+//   console.log("images", _images)
+//   let pairs  = [];
+//   for(let i = 0; i < _assets.length; i++){
+//     for(let j = 0; j < _images.length; j++){
+//       if(_assets[i] === _images[j]){
+//         pairs.push(_assets[i])
+//       }
+//     }
+//   }
+//   return pairs;
+// }
+/* ---------------------------------- */
 
 async function loadPosenet() {
   return new Promise(resolve =>{
@@ -117,26 +140,27 @@ function resizeImage(_img, _window_size){
 }
 
 /* events ----------------------------------------*/
+function mousePressed(){
+  num = selectKeypoints(points);
+}
+
 function mouseDragged(){ 
-  drag_flg = true;                        
+  if(num > -1){
+    points[num].x = mouseX;
+    points[num].y = mouseY;
+  }
 }
 
 function mouseReleased(){ 
-  drag_flg = false;
+  num = -1;
 }
 
-//ドラッグした時の挙動
-function dragKeypoints(_points){
+//移動させるKeypointsの選択
+function selectKeypoints(_points){
   for(let i = 0; i < _points.length; i++){
     let distance = Math.sqrt(Math.pow(_points[i].x - mouseX, 2) + Math.pow(_points[i].y - mouseY, 2));
-    
-    if(distance < 8){
-      if(drag_flg){
-        _points[i].x = mouseX;
-        _points[i].y = mouseY;
-      }else{
-        return;
-      }
+    if(distance < 10){
+      return i;
     }
   }
 }
@@ -154,7 +178,7 @@ function keyTyped() {
 
 async function imgSelect(_image_name){
   // save json
-  let fullPath = await doGet(img_dir+"/u/"+image_name);
+  let fullPath = await doGet(assets_dir+"/u/"+assets_name);
   const jt = createJson(fullPath[0], img, poses, points);
   json_array.push(jt);
   output_json.imgInfo = json_array;
@@ -163,12 +187,12 @@ async function imgSelect(_image_name){
   console.log("saved!");
   
   //新しいimageを代入
-  image_name = _image_name;
-  img = loadImage(img_dir+"/"+image_name);
-  const img_size = await loadImgsrc(img_dir+"/"+image_name);
+  assets_name = _image_name;
+  img = loadImage(assets_dir+"/"+assets_name);
+  const img_size = await loadImgsrc(assets_dir+"/"+assets_name);
   resizeCanvas(img_size.x, img_size.y);
   
-  fullPath = await doGet(img_dir+"/u/"+image_name);
+  fullPath = await doGet(assets_dir+"/u/"+assets_name);
   let searched = await searchData(json_array, fullPath[0]);
   json_array = await deleteData(json_array, fullPath[0]);
   if(searched.length == 1){
@@ -176,8 +200,8 @@ async function imgSelect(_image_name){
   }else{
     poses = await getPose(img_dom);
   }
-  
-  initial_points = await setinitial_points(img_dom);
+  const init = await setinitial_points(img_dom);
+  initial_points = init.slice();
   
   console.log("show now (saved data or posenst)", poses);
   

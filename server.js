@@ -16,6 +16,7 @@ app.use(bodyParser.json());
 app.use(cors())
 
 // http://expressjs.com/en/starter/static-files.html
+
 app.use(express.static('public'));
 
 app.use("/assets", assets);
@@ -49,10 +50,17 @@ app.post('/data/dataset.json', function(req, res) {
 });
 
 app.get('/data/dataset.json', function(req, res) {
-  const data = JSON.stringify(fs.readFileSync(__dirname +'/public/dataset.json'));
-  console.log(data.length)
-  res.json(fs.readFileSync(__dirname +'/public/dataset.json'));
-});
+  console.log(req.path)
+})
+
+
+//回収
+// app.get('/data/*', function(req, res) {
+//   console.log("here")
+//   const data = JSON.stringify(fs.readFileSync(__dirname +'/public/data/dataset.json'));
+//   res.json(fs.readFileSync(__dirname +'/public/data/dataset.json'));
+// });
+
 
 // listen for requests :)
 var listener = app.listen(process.env.PORT, function () {
