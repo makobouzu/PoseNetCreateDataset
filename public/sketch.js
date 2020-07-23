@@ -1,8 +1,7 @@
-let net;  //posenet.model
-let img_dom; //読み込んだimgのDom
-let img; //読み込んだimgのp5.Image
-let assets;  // /assets内の全ての画像の名前
-let images;  // /img内の全ての画像の名前
+let net;       //posenet.model
+let img_dom;   //読み込んだimgのDom
+let img;       //読み込んだimgのp5.Image
+let assets         = [];    // /assets内の全ての画像の名前
 let assets_dir     = "/assets" //choose default: /assets
 let img_dir        = "/img" //choose default: /img
 let assets_name    = "";
@@ -52,10 +51,15 @@ async function init() {
     }
   }
   
+  // /imgファイル と /assets を結合し検索する。
+  let images = [];    // /img内の全ての画像の名前
   assets = await doGet(assets_dir+"/all");
-  images = await doGet(img_dir+"/all");   //assets.push(await doGet())?
+  let image = await doGet(img_dir+"/all");
+  for(let i = 0; i < image.length; i++){
+    images.push("/img" + "/" + image[i]);
+  }
   if(images.length != 0){
-    assets.push(images.slice());
+    assets = assets.concat(images.slice());
   }
   
   assets_name = assets[0];
@@ -74,7 +78,7 @@ async function init() {
   if(all_data.imgInfo.length > 0){
     let fullPath = await doGet(assets_dir+"/u/"+assets_name);
     let searched = await searchData(all_data.imgInfo, fullPath[0]);
-    json_array = await deleteData(json_array, fullPath[0]);
+    json_array   = await deleteData(json_array, fullPath[0]);
     if(searched.length == 1){
       poses = searched[0].pose;
     }else{  
@@ -92,22 +96,6 @@ async function init() {
   
   setKeypoints(poses);
 }
-
-/* add---------------------------------*/
-// function findImg(_assets, _images){
-//   console.log("assets", _assets)
-//   console.log("images", _images)
-//   let pairs  = [];
-//   for(let i = 0; i < _assets.length; i++){
-//     for(let j = 0; j < _images.length; j++){
-//       if(_assets[i] === _images[j]){
-//         pairs.push(_assets[i])
-//       }
-//     }
-//   }
-//   return pairs;
-// }
-/* ---------------------------------- */
 
 async function loadPosenet() {
   return new Promise(resolve =>{
@@ -134,8 +122,8 @@ async function getPose(_img) {
 }
 
 function resizeImage(_img, _window_size){
-  let scale = _window_size/_img.height;
-  _img.width = _img.width*scale;
+  let scale   = _window_size/_img.height;
+  _img.width  = _img.width*scale;
   _img.height = _img.height*scale;
 }
 
@@ -263,9 +251,9 @@ async function deleteData(_json, _url) {
 
 //json書き出し, 1画像の保存(複数をまとめる場合はこれを[]に入れてpushする。)
 function createJson(_url, _img, _poses, _points){ 
-  let json = {};
+  let json     = {};
   let metaInfo = {};
-  let pose   = {};
+  let pose     = {};
   let keypoint = [];
   
   for(let i = 0; i < _poses.keypoints.length; i++){
