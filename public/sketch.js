@@ -6,6 +6,7 @@ let assets_dir     = "/assets" //choose default: /assets
 let img_dir        = "/img" //choose default: /img
 let assets_name    = "";
 let image_name     = ""; //image_name格納用
+let file_name      = [];
 let poses          = {}; //pose格納用
 let points         = []; //変更可能なxy特徴点
 let initial_points = []; //推論結果のxy特徴点
@@ -52,31 +53,41 @@ async function init() {
   }
   
   // /imgファイル と /assets を結合し検索する。
+  let asset = await doGet(assets_dir + "/all");
+  for(let i = 0; i < asset.length; i++){
+    assets.push("/assets" + "/" + asset[i]);
+  }
   let images = [];    // /img内の全ての画像の名前
-  assets = await doGet(assets_dir+"/all");
   let image = await doGet(img_dir+"/all");
   for(let i = 0; i < image.length; i++){
     images.push("/img" + "/" + image[i]);
   }
   if(images.length != 0){
     assets = assets.concat(images.slice());
+    console.log(assets)
   }
   
   assets_name = assets[0];
-  img = loadImage(assets_dir+"/"+assets_name);
+  img = loadImage(assets_name);
   for(let i = 0; i < assets.length ; i++){
+    const filename = assets[i].split("/")
+    if(!filename[2].includes(".zip")){
+       file_name.push(filename[2]);
       let option = document.createElement("option");
       option.setAttribute("value", assets[i]);
       option.text = assets[i];
-      document.getElementById("img_select").appendChild(option);
+      document.getElementById("img_select").appendChild(option); 
+    }
   }
+  
 
   net = await loadPosenet();
 
-  const img_size = await loadImgsrc(assets_dir+"/"+assets_name);
+  const img_size = await loadImgsrc(assets_name);
   createCanvas(img_size.x, img_size.y);
   if(all_data.imgInfo.length > 0){
-    let fullPath = await doGet(assets_dir+"/u/"+assets_name);
+    const filename = assets_name.split("/")
+    let fullPath = await doGet(assets_dir+"/u/"+filename[2]);
     let searched = await searchData(all_data.imgInfo, fullPath[0]);
     json_array   = await deleteData(json_array, fullPath[0]);
     if(searched.length == 1){
@@ -166,7 +177,8 @@ function keyTyped() {
 
 async function imgSelect(_image_name){
   // save json
-  let fullPath = await doGet(assets_dir+"/u/"+assets_name);
+  let filename = assets_name.split("/")
+  let fullPath = await doGet("/"+filename[1]+"/u/"+filename[2]);
   const jt = createJson(fullPath[0], img, poses, points);
   json_array.push(jt);
   output_json.imgInfo = json_array;
@@ -176,11 +188,12 @@ async function imgSelect(_image_name){
   
   //新しいimageを代入
   assets_name = _image_name;
-  img = loadImage(assets_dir+"/"+assets_name);
-  const img_size = await loadImgsrc(assets_dir+"/"+assets_name);
+  filename    = assets_name.split("/")
+  img = loadImage(assets_name);
+  const img_size = await loadImgsrc(assets_name);
   resizeCanvas(img_size.x, img_size.y);
   
-  fullPath = await doGet(assets_dir+"/u/"+assets_name);
+  fullPath = await doGet("/"+filename[1]+"/u/"+filename[2]);
   let searched = await searchData(json_array, fullPath[0]);
   json_array = await deleteData(json_array, fullPath[0]);
   if(searched.length == 1){
