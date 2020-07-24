@@ -18,16 +18,4 @@
 - 別の画像を選択すると、自動でsaveされる。(Listの最後の画像を保存する時は、別の画像を選択する。)  
 - /data/dataset.json内に記録される。 
 
-# ToDo
-- assetsへのuploadが画像一枚ずつしか行えない。  
-- 初期画像に何入れておくか？
-- ~~dataset.jsonが初期化されてしまうバグがある。~~  
-- ~~途中でkeypointsを移動させた時、推論のKeypoints(推論の初期値)がうまく反映されない。~~  
-- ~~Keypoints同士が重なった時の対処法。~~  
-- ~~PoseのKeypointの操作がやりにくい。~~
-
-~~ターミナルからzipにしてファイルあげたり、gitからimportすると、/public以下にimageおけるようになるっぽい。
-ただそうすると、assetsの中に入らないから、doGet("/assets/all")とかdoGet("/assets/u/img.jpg")が通らなくなるな
-サーバーとフロント書き換えればいけるけど
-doGet("/all/foldername"), doGet("/u/foldername/filename")とかに~~
 

@@ -15,10 +15,6 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 app.use(cors())
 
-// http://expressjs.com/en/starter/static-files.html
-
-app.use(express.static('public'));
-
 app.use("/assets", assets);
 
 // http://expressjs.com/en/startLSbasic-routing.html
@@ -49,17 +45,14 @@ app.post('/data/dataset.json', function(req, res) {
   res.send('success!');
 });
 
-app.get('/data/dataset.json', function(req, res) {
-  console.log(req.path)
-})
+// app.get('/data/dataset.json', function(req, res) {
+//   const data = JSON.parse(fs.readFileSync(__dirname +'/public/data/dataset.json'));
+//   console.log(data.imgInfo[0].meta.url)
+//   res.json(data);
+// })
 
-
-//回収
-// app.get('/data/*', function(req, res) {
-//   console.log("here")
-//   const data = JSON.stringify(fs.readFileSync(__dirname +'/public/data/dataset.json'));
-//   res.json(fs.readFileSync(__dirname +'/public/data/dataset.json'));
-// });
+// http://expressjs.com/en/starter/static-files.html
+app.use(express.static('public'));
 
 
 // listen for requests :)
