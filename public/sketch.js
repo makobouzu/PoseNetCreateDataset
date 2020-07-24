@@ -62,9 +62,11 @@ async function init() {
   for(let i = 0; i < image.length; i++){
     images.push("/img" + "/" + image[i]);
   }
-  if(images.length != 0){
+  if(assets.length != 0){
     assets = assets.concat(images.slice());
     console.log(assets)
+  }else if(assets.length == 0){
+    assets = images.slice();
   }
   
   assets_name = assets[0];
@@ -87,7 +89,7 @@ async function init() {
   createCanvas(img_size.x, img_size.y);
   if(all_data.imgInfo.length > 0){
     const filename = assets_name.split("/")
-    let fullPath = await doGet(assets_dir+"/u/"+filename[2]);
+    let fullPath = await doGet(filename[1]+"/u/"+filename[2]);
     let searched = await searchData(all_data.imgInfo, fullPath[0]);
     json_array   = await deleteData(json_array, fullPath[0]);
     if(searched.length == 1){
